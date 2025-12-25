@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using WalletLedger.Api.Data;
+
 namespace WalletLedger.Api
 {
     public class Program
@@ -13,6 +16,10 @@ namespace WalletLedger.Api
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Add DbContext
+            builder.Services.AddDbContext<WalletLedgerDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
 
