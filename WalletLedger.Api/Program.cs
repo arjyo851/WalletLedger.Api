@@ -1,5 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
+using WalletLedger.Api.Application.Interfaces;
+using WalletLedger.Api.Application.Services;
 using WalletLedger.Api.Data;
 
 namespace WalletLedger.Api
@@ -20,6 +22,11 @@ namespace WalletLedger.Api
             // Add DbContext
             builder.Services.AddDbContext<WalletLedgerDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+            builder.Services.AddScoped<IWalletService, WalletService>();
+            builder.Services.AddScoped<ILedgerService, LedgerService>();
+
 
             var app = builder.Build();
 

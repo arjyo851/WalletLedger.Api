@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="WalletLedger.Api/WalletLedger.Api.csproj" />
+  <Project Path="WalletLedger.Tests/WalletLedger.Tests.csproj" Id="763f18fe-f987-407c-b79a-b669aa1cb9e2" />
 </Solution>
