@@ -54,6 +54,16 @@ namespace WalletLedger.Api.Application.Services
 
             return credits - debits;
         }
+
+        public async Task ValidateWalletOwnership(Guid walletId, Guid userId)
+        {
+            var ownsWallet = await _db.Wallets
+                .AnyAsync(w => w.Id == walletId && w.UserId == userId);
+
+            if (!ownsWallet)
+                throw new InvalidOperationException("Unauthorized wallet access");
+        }
+
     }
 
 }
