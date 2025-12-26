@@ -6,7 +6,7 @@ using WalletLedger.Api.Contracts.Requests;
 
 namespace WalletLedger.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "UserOnly")]
     [ApiController]
     [Route("api/transactions")]
     public class TransactionController : ControllerBase

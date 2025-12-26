@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using WalletLedger.Api.Application.Interfaces;
 using WalletLedger.Api.Application.Services;
+using WalletLedger.Api.Auth;
 using WalletLedger.Api.Data;
 using WalletLedger.Api.Middleware;
 
@@ -84,11 +86,21 @@ namespace WalletLedger.Api
                                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
                         ),
                         // Map the 'sub' claim to ClaimTypes.NameIdentifier for easier access
-                        NameClaimType = JwtRegisteredClaimNames.Sub
+                        NameClaimType = JwtRegisteredClaimNames.Sub,
+                        // Explicitly set role claim type so authorization policies can find roles
+                        RoleClaimType = ClaimTypes.Role
                     };
                 });
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("UserOnly", policy =>
+                    policy.RequireRole(Roles.User));
+
+                options.AddPolicy("AdminOnly", policy =>
+                    policy.RequireRole(Roles.Admin));
+            });
+
 
             var app = builder.Build();
 

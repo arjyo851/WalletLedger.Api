@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using WalletLedger.Api.Auth;
 using WalletLedger.Api.Data;
 
 namespace WalletLedger.Api.Controllers
@@ -28,15 +29,16 @@ namespace WalletLedger.Api.Controllers
             if (!userExists)
                 return Unauthorized();
 
-            var token = GenerateJwt(userId);
+            var token = GenerateJwt(userId,Roles.User);
             return Ok(new { token });
         }
 
-        private string GenerateJwt(Guid userId)
+        private string GenerateJwt(Guid userId, string role)
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) //step1: make claims
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),//step1: make claims
+                new Claim(ClaimTypes.Role, role)
             };
 
             var key = new SymmetricSecurityKey(
@@ -57,6 +59,18 @@ namespace WalletLedger.Api.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [HttpPost("login-admin")]
+        public async Task<IActionResult> LoginAdmin(Guid userId)
+        {
+            var userExists = await _db.Users.AnyAsync(u => u.Id == userId);
+            if (!userExists)
+                return Unauthorized();
+
+            var token = GenerateJwt(userId, Roles.Admin);
+            return Ok(new { token });
+        }
+
 
     }
 }

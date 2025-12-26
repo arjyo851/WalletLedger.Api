@@ -8,7 +8,7 @@ using WalletLedger.Api.Contracts.Responses;
 
 namespace WalletLedger.Api.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "UserOnly")]
     [ApiController]
     [Route("api/wallets")]
     public class WalletController : ControllerBase
