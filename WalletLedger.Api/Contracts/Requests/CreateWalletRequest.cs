@@ -2,7 +2,6 @@
 {
     public record CreateWalletRequest
     (
-        Guid UserId,
         string Currency
     );
 }

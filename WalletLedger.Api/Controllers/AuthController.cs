@@ -49,9 +49,10 @@ namespace WalletLedger.Api.Controllers
                 UserId = userId,
                 TokenHash = refreshTokenHash,
                 ExpiresAt = DateTime.UtcNow.AddDays(
-            int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!)
-        ),
-                IsRevoked = false
+                    int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!)
+                ),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
@@ -135,7 +136,9 @@ namespace WalletLedger.Api.Controllers
                 TokenHash = newRefreshTokenHash,
                 ExpiresAt = DateTime.UtcNow.AddDays(
                     int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!)
-                )
+                ),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
             });
 
             var permissions = new[]

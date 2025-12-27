@@ -43,7 +43,17 @@ namespace WalletLedger.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateWallet(CreateWalletRequest request)
         {
-            var walletId = await _walletService.CreateWalletAsync(request.UserId, request.Currency);
+            // Extracted userId from JWT token for security - users can only create wallets for themselves
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized("User ID claim not found in token");
+            }
+
+            var userId = Guid.Parse(userIdClaim);
+
+            var walletId = await _walletService.CreateWalletAsync(userId, request.Currency);
             return Ok(new WalletResponse(walletId, request.Currency));
 
         }
