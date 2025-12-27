@@ -31,10 +31,10 @@ namespace WalletLedger.Api
             {
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. Enter your token in the text input below (without 'Bearer' prefix).",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
+                    Description = "JWT Authorization header using the Bearer scheme. Enter your token in the text input below (without 'Bearer' prefix).", //text shown to users
+                    Name = "Authorization", // name of the header i.e Authorization : bearer <token>
+                    In = ParameterLocation.Header, // location of the header in request
+                    Type = SecuritySchemeType.Http, // type of the scheme 
                     Scheme = "Bearer",
                     BearerFormat = "JWT"
                 });
@@ -42,15 +42,15 @@ namespace WalletLedger.Api
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
-                        new OpenApiSecurityScheme
+                        new OpenApiSecurityScheme // applies bearer auth globally to all endpoints 
                         {
-                            Reference = new OpenApiReference
+                            Reference = new OpenApiReference 
                             {
                                 Type = ReferenceType.SecurityScheme,
                                 Id = "Bearer"
                             }
                         },
-                        Array.Empty<string>()
+                        Array.Empty<string>() // no specific scopes required
                     }
                 });
             });
@@ -87,9 +87,8 @@ namespace WalletLedger.Api
                                 Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
                         ),
                         // Map the 'sub' claim to ClaimTypes.NameIdentifier for easier access
-                        NameClaimType = JwtRegisteredClaimNames.Sub,
-                        // Explicitly set role claim type so authorization policies can find roles
-                        RoleClaimType = ClaimTypes.Role
+                        NameClaimType = JwtRegisteredClaimNames.Sub, // maps "sub" to NameIdentifier, must write
+
                     };
                 });
 

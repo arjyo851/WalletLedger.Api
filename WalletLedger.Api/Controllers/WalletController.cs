@@ -23,10 +23,10 @@ namespace WalletLedger.Api.Controllers
         [HttpGet("{walletId}/balance")]
         public async Task<IActionResult> GetBalanceAsync(Guid walletId)
         {
-            // Try to find userId from NameIdentifier claim (mapped from 'sub' claim)
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) 
-                ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            
+             
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+
             if (string.IsNullOrEmpty(userIdClaim))
             {
                 return Unauthorized("User ID claim not found in token");

@@ -83,7 +83,7 @@ namespace WalletLedger.Api.Controllers
                 audience: _config["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse(_config["Jwt:ExpiryMinutes"]!)
+                    int.Parse(_config["Jwt:AccessTokenExpiryMinutes"]!)
                 ),
                 signingCredentials: creds
             );
