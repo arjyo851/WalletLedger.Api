@@ -11,6 +11,7 @@ using WalletLedger.Api.Application.Services;
 using WalletLedger.Api.Auth;
 using WalletLedger.Api.Data;
 using WalletLedger.Api.Middleware;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WalletLedger.Api
 {
@@ -54,7 +55,7 @@ namespace WalletLedger.Api
                 });
             });
 
-            // Add DbContext
+            // Added DbContext
             builder.Services.AddDbContext<WalletLedgerDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -62,10 +63,10 @@ namespace WalletLedger.Api
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<ILedgerService, LedgerService>();
 
-            // from appsettings pick up the jwt section
+            // from appsettings picked up the jwt section
             var jwtSettings = builder.Configuration.GetSection("Jwt");
 
-            // Configure JWT to preserve original claim names (don't map to Microsoft claim types)
+            // Configured JWT to preserve original claim names (don't map to Microsoft claim types)
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
@@ -92,14 +93,31 @@ namespace WalletLedger.Api
                     };
                 });
 
+            builder.Services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("UserOnly", policy =>
-                    policy.RequireRole(Roles.User));
+                options.AddPolicy("WalletRead", policy =>
+                    policy.Requirements.Add(new PermissionRequirement(Permissions.WalletRead)));
 
-                options.AddPolicy("AdminOnly", policy =>
-                    policy.RequireRole(Roles.Admin));
+                options.AddPolicy("WalletWrite", policy =>
+                    policy.Requirements.Add(new PermissionRequirement(Permissions.WalletWrite)));
+
+                options.AddPolicy("TransactionCredit", policy =>
+                    policy.Requirements.Add(new PermissionRequirement(Permissions.TransactionCredit)));
+
+                options.AddPolicy("TransactionDebit", policy =>
+                    policy.Requirements.Add(new PermissionRequirement(Permissions.TransactionDebit)));
+
+                options.AddPolicy("AdminHealth", policy =>
+                    policy.Requirements.Add(new PermissionRequirement(Permissions.AdminHealth)));
+
+
             });
+
+
+
 
 
             var app = builder.Build();
@@ -117,7 +135,7 @@ namespace WalletLedger.Api
 
             app.UseAuthorization();
 
-
+            //Made Custom middleware for exception handling
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.MapControllers();

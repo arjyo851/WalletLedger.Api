@@ -8,7 +8,6 @@ using WalletLedger.Api.Contracts.Responses;
 
 namespace WalletLedger.Api.Controllers
 {
-    [Authorize(Policy = "UserOnly")]
     [ApiController]
     [Route("api/wallets")]
     public class WalletController : ControllerBase
@@ -20,6 +19,7 @@ namespace WalletLedger.Api.Controllers
             _walletService = walletService;
         }
 
+        [Authorize(Policy = "WalletRead")]
         [HttpGet("{walletId}/balance")]
         public async Task<IActionResult> GetBalanceAsync(Guid walletId)
         {
@@ -39,6 +39,7 @@ namespace WalletLedger.Api.Controllers
             return Ok(new BalanceResponse(balance));
         }
 
+        [Authorize(Policy = "WalletWrite")]
         [HttpPost]
         public async Task<IActionResult> CreateWallet(CreateWalletRequest request)
         {

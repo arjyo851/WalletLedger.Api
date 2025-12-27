@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using WalletLedger.Api.Auth;
 using WalletLedger.Api.Data;
+using WalletLedger.Api.Domain.Entities;
 
 namespace WalletLedger.Api.Controllers
 {
@@ -29,25 +30,55 @@ namespace WalletLedger.Api.Controllers
             if (!userExists)
                 return Unauthorized();
 
-            var token = GenerateJwt(userId,Roles.User);
-            return Ok(new { token });
-        }
-
-        private string GenerateJwt(Guid userId, string role)
-        {
-            var claims = new[]
+            var permissions = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),//step1: make claims
-                new Claim(ClaimTypes.Role, role)
+                Permissions.WalletRead,
+                Permissions.WalletWrite,
+                Permissions.TransactionCredit,
+                Permissions.TransactionDebit
             };
 
+            var accessToken = GenerateJwt(userId, permissions);
+
+            var refreshToken = RefreshTokenGenerator.Generate();
+            var refreshTokenHash = RefreshTokenGenerator.Hash(refreshToken);
+
+            _db.RefreshTokens.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                TokenHash = refreshTokenHash,
+                ExpiresAt = DateTime.UtcNow.AddDays(
+            int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!)
+        ),
+                IsRevoked = false
+            });
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                accessToken,
+                refreshToken
+            });
+        }
+
+        private string GenerateJwt(Guid userId, IEnumerable<string> permissions)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),//step1: make claims
+            };
+
+            claims.AddRange(permissions.Select(p => new Claim("permissions", p))); // add permissions to claims
+
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!) // get jwt from config (appsettings)
+                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!) // got jwt from config (appsettings)
             );
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // get creds or the key
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // got creds or the key
 
-            var token = new JwtSecurityToken( // make a object of type jwtsecuritytoken with all these informtion
+            var token = new JwtSecurityToken( // made a object of type jwtsecuritytoken with all these informtion
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
@@ -67,8 +98,82 @@ namespace WalletLedger.Api.Controllers
             if (!userExists)
                 return Unauthorized();
 
-            var token = GenerateJwt(userId, Roles.Admin);
+            var permissions = new[]
+            {
+                Permissions.AdminHealth
+            };
+
+
+            var token = GenerateJwt(userId, permissions);
             return Ok(new { token });
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh(string refreshToken)
+        {
+            var tokenHash = RefreshTokenGenerator.Hash(refreshToken);
+
+            var storedToken = await _db.RefreshTokens
+                .FirstOrDefaultAsync(t =>
+                    t.TokenHash == tokenHash &&
+                    !t.IsRevoked &&
+                    t.ExpiresAt > DateTime.UtcNow);
+
+            if (storedToken == null)
+                return Unauthorized();
+
+            // Rotate token 
+            storedToken.IsRevoked = true;
+
+            var newRefreshToken = RefreshTokenGenerator.Generate();
+            var newRefreshTokenHash = RefreshTokenGenerator.Hash(newRefreshToken);
+
+            _db.RefreshTokens.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = storedToken.UserId,
+                TokenHash = newRefreshTokenHash,
+                ExpiresAt = DateTime.UtcNow.AddDays(
+                    int.Parse(_config["Jwt:RefreshTokenExpiryDays"]!)
+                )
+            });
+
+            var permissions = new[]
+            {
+                Permissions.WalletRead,
+                Permissions.WalletWrite,
+                Permissions.TransactionCredit,
+                Permissions.TransactionDebit
+            };
+
+            var newAccessToken =
+                GenerateJwt(storedToken.UserId, permissions);
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                accessToken = newAccessToken,
+                refreshToken = newRefreshToken
+            });
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(string refreshToken)
+        {
+            var tokenHash = RefreshTokenGenerator.Hash(refreshToken);
+
+            var storedToken = await _db.RefreshTokens
+                .FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
+
+            if (storedToken != null)
+            {
+                storedToken.IsRevoked = true;
+                await _db.SaveChangesAsync();
+            }
+
+            return Ok();
         }
 
 

@@ -12,7 +12,8 @@ public class WalletLedgerDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
-    public DbSet<LedgerEntry> LedgerEntries { get; set; }   
+    public DbSet<LedgerEntry> LedgerEntries { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +64,16 @@ public class WalletLedgerDbContext : DbContext
             entity.HasIndex(e => new { e.WalletId, e.CreatedAt });
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+        });
+
+        // RefreshToken configuration
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("RefreshTokens");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TokenHash)
+                  .IsUnique();
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
         });
     }
 }

@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WalletLedger.Api.Controllers
 {
-    [Authorize(Policy = "AdminOnly")]
     [ApiController]
     [Route("api/admin")]
     public class AdminController:ControllerBase
     {
+        [Authorize(Policy = "AdminHealth")]
         [HttpGet("health")]
         public IActionResult Health()
         {

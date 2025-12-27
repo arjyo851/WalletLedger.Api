@@ -6,7 +6,6 @@ using WalletLedger.Api.Contracts.Requests;
 
 namespace WalletLedger.Api.Controllers
 {
-    [Authorize(Policy = "UserOnly")]
     [ApiController]
     [Route("api/transactions")]
     public class TransactionController : ControllerBase
@@ -18,6 +17,7 @@ namespace WalletLedger.Api.Controllers
             _ledgerService = ledgerService;
         }
 
+        [Authorize(Policy = "TransactionCredit")]
         [HttpPost("credit")]
         public async Task<IActionResult> Credit(TransactionRequest request)
         {
@@ -25,6 +25,7 @@ namespace WalletLedger.Api.Controllers
             return Ok();
         }
 
+        [Authorize(Policy = "TransactionDebit")]
         [HttpPost("debit")]
         public async Task<IActionResult> Debit(TransactionRequest request)
         {
