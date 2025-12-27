@@ -1,21 +1,63 @@
-﻿using WalletLedger.Api.Application.Services;
+﻿using WalletLedger.Api.Application.Interfaces;
+using WalletLedger.Api.Application.Services;
+using WalletLedger.Api.Contracts.Responses;
 using WalletLedger.Api.Data;
 using WalletLedger.Api.Domain.Entities;
 using Xunit;
 
 namespace WalletLedger.Tests.TestHelpers
 {
+    // Simple in-memory cache implementation for testing
+    public class TestCacheService : ICacheService
+    {
+        private readonly Dictionary<string, string> _cache = new();
+
+        public Task<T?> GetAsync<T>(string key)
+        {
+            if (_cache.TryGetValue(key, out var value))
+            {
+                return Task.FromResult(System.Text.Json.JsonSerializer.Deserialize<T>(value));
+            }
+            return Task.FromResult<T?>(default);
+        }
+
+        public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
+        {
+            var serialized = System.Text.Json.JsonSerializer.Serialize(value);
+            _cache[key] = serialized;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(string key)
+        {
+            _cache.Remove(key);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveByPatternAsync(string pattern)
+        {
+            var keysToRemove = _cache.Keys.Where(k => k.Contains(pattern)).ToList();
+            foreach (var key in keysToRemove)
+            {
+                _cache.Remove(key);
+            }
+            return Task.CompletedTask;
+        }
+    }
+
     public class LedgerIntegrationTests : IAsyncLifetime
     {
         private WalletLedgerDbContext _db = null!;
         private WalletService _walletService = null!;
         private LedgerService _ledgerService = null!;
+        private ICacheService _cacheService = null!;
 
         public async Task InitializeAsync()
         {
             _db = DbContextFactory.Create();
-            _walletService = new WalletService(_db);
-            _ledgerService = new LedgerService(_db);
+            _cacheService = new TestCacheService();
+            _walletService = new WalletService(_db, _cacheService);
+            _ledgerService = new LedgerService(_db, _cacheService);
         }
 
         public async Task DisposeAsync()

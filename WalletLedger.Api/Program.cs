@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -63,6 +64,15 @@ namespace WalletLedger.Api
 
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<ILedgerService, LedgerService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddScoped<ICacheService, CacheService>();
+
+            // Add health checks
+            builder.Services.AddHealthChecks()
+                .AddDbContextCheck<WalletLedgerDbContext>("database");
+
+            // Add in-memory cache
+            builder.Services.AddDistributedMemoryCache();
 
             // from appsettings picked up the jwt section
             var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -141,9 +151,6 @@ namespace WalletLedger.Api
             });
 
 
-
-
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -155,6 +162,9 @@ namespace WalletLedger.Api
 
             app.UseHttpsRedirection();
 
+            // Health checks endpoint
+            app.MapHealthChecks("/health");
+
             app.UseRateLimiter();
 
             app.UseAuthentication();
@@ -163,6 +173,9 @@ namespace WalletLedger.Api
 
             //Made Custom middleware for exception handling
             app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            // Audit logging middleware
+            app.UseMiddleware<AuditLoggingMiddleware>();
 
             app.MapControllers();
 
