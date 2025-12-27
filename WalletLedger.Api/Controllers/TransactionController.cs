@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using WalletLedger.Api.Application.Interfaces;
 using WalletLedger.Api.Contracts;
 using WalletLedger.Api.Contracts.Requests;
 
 namespace WalletLedger.Api.Controllers
 {
+    [EnableRateLimiting("UserRateLimit")]
     [ApiController]
     [Route("api/transactions")]
     public class TransactionController : ControllerBase

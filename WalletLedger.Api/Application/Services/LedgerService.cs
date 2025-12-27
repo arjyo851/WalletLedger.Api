@@ -43,6 +43,26 @@ namespace WalletLedger.Api.Application.Services
             if (amount <= 0)
                 throw new ArgumentException("Amount must be positive");
 
+            // Rate limiting check for debit operations: Prevents abuse by limiting debits to 5 per wallet per minute
+            if (type == LedgerEntryType.Debit)
+            {
+                // Count debit entries for this wallet created in the last 1 minute
+                var recentDebitCount = await _db.LedgerEntries
+                    .Where(l =>
+                        l.WalletId == walletId &&
+                        l.Type == LedgerEntryType.Debit &&
+                        l.CreatedAt > DateTime.UtcNow.AddMinutes(-1))
+                    .CountAsync();
+
+                // If 5 or more debits occurred in the last minute, reject the request
+                if (recentDebitCount >= 5)
+                {
+                    throw new InvalidOperationException(
+                        "Too many debit attempts. Please try later."
+                    );
+                }
+            }
+
             using var transaction =
                 await _db.Database.BeginTransactionAsync();
 

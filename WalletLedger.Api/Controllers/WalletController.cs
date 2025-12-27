@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using WalletLedger.Api.Application.Interfaces;
@@ -8,6 +9,7 @@ using WalletLedger.Api.Contracts.Responses;
 
 namespace WalletLedger.Api.Controllers
 {
+    [EnableRateLimiting("UserRateLimit")]
     [ApiController]
     [Route("api/wallets")]
     public class WalletController : ControllerBase

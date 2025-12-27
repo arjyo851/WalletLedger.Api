@@ -12,6 +12,7 @@ using WalletLedger.Api.Auth;
 using WalletLedger.Api.Data;
 using WalletLedger.Api.Middleware;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.RateLimiting;
 
 namespace WalletLedger.Api
 {
@@ -115,6 +116,30 @@ namespace WalletLedger.Api
 
             });
 
+            // Add rate limiting
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.AddPolicy("UserRateLimit", context =>
+                {
+                    var userId =
+                        context.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                        ?? context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? context.Connection.RemoteIpAddress?.ToString()
+                        ?? "anonymous";
+
+                    return RateLimitPartition.GetTokenBucketLimiter(
+                        userId,
+                        _ => new TokenBucketRateLimiterOptions
+                        {
+                            TokenLimit = 100,               // max burst
+                            TokensPerPeriod = 50,            // refill
+                            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                });
+            });
+
 
 
 
@@ -129,6 +154,8 @@ namespace WalletLedger.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseRateLimiter();
 
             app.UseAuthentication();
 
