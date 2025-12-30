@@ -74,10 +74,10 @@ namespace WalletLedger.Api.Controllers
             claims.AddRange(permissions.Select(p => new Claim("permissions", p))); // add permissions to claims
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!) // got jwt from config (appsettings)
+                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!) // got jwt key from config (appsettings)
             );
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // got creds or the key
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // got creds for the key and hash it
 
             var token = new JwtSecurityToken( // made a object of type jwtsecuritytoken with all these informtion
                 issuer: _config["Jwt:Issuer"],

@@ -18,7 +18,9 @@ public class AuditLoggingMiddleware
     public async Task InvokeAsync(HttpContext context, IAuditLogService auditLogService)
     {
         // Skip audit logging for health checks and swagger
+        // Accept both "/health" and "/api/health" used by controllers and health endpoints
         if (context.Request.Path.StartsWithSegments("/health") ||
+            context.Request.Path.StartsWithSegments("/api/health") ||
             context.Request.Path.StartsWithSegments("/swagger"))
         {
             await _next(context);
@@ -125,6 +127,9 @@ public class AuditLoggingMiddleware
         return null;
     }
 }
+
+
+
 
 
 

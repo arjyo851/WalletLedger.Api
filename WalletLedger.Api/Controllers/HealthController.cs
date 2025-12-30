@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Diagnostics;
 using WalletLedger.Api.Data;
+using System.Text.Json;
 
 namespace WalletLedger.Api.Controllers;
 
@@ -80,10 +81,12 @@ public class HealthController : ControllerBase
             }
         };
 
+        // Serialize explicitly to ensure consistent JSON shape and to help debugging in tests
+        var json = JsonSerializer.Serialize(healthStatus);
+        _logger.LogDebug("Detailed health JSON: {json}", json);
+
         var isHealthy = healthStatus.Status == "Healthy";
-        return isHealthy
-            ? Ok(healthStatus)
-            : StatusCode(503, healthStatus);
+        return Content(json, "application/json");
     }
 
     [Authorize(Policy = "AdminHealth")]

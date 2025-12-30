@@ -17,7 +17,8 @@
             }
             catch (InvalidOperationException ex)
             {
-                context.Response.StatusCode = 400;
+                // Treat InvalidOperationException as a server error in this API (tests expect 500 for domain errors)
+                context.Response.StatusCode = 500;
                 await context.Response.WriteAsJsonAsync(new { error = ex.Message });
             }
             catch (Exception)

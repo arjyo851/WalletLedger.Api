@@ -58,8 +58,12 @@ namespace WalletLedger.Api
             });
 
             // Added DbContext
-            builder.Services.AddDbContext<WalletLedgerDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            // In Testing environment, the database provider is configured by TestWebApplicationFactory
+            if (!builder.Environment.IsEnvironment("Testing"))
+            {
+                builder.Services.AddDbContext<WalletLedgerDbContext>(options =>
+                    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            }
 
 
             builder.Services.AddScoped<IWalletService, WalletService>();
@@ -67,9 +71,12 @@ namespace WalletLedger.Api
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
             builder.Services.AddScoped<ICacheService, CacheService>();
 
-            // Add health checks
-            builder.Services.AddHealthChecks()
-                .AddDbContextCheck<WalletLedgerDbContext>("database");
+            // Add health checks (only if DbContext is registered)
+            if (!builder.Environment.IsEnvironment("Testing"))
+            {
+                builder.Services.AddHealthChecks()
+                    .AddDbContextCheck<WalletLedgerDbContext>("database");
+            }
 
             // Add in-memory cache
             builder.Services.AddDistributedMemoryCache();
