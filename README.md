@@ -191,15 +191,3 @@ Wallet-to-wallet transfers are executed atomically using database transactions, 
 ### Audit Trail
 
 All operations are logged to the `AuditLog` table, including user actions, IP addresses, and timestamps for compliance and debugging.
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
-
-## Support
-
-[Add support information here]
